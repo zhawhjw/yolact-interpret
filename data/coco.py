@@ -9,16 +9,19 @@ import numpy as np
 from .config import cfg
 from pycocotools import mask as maskUtils
 
+
 def get_label_map():
     if cfg.dataset.label_map is None:
-        return {x+1: x+1 for x in range(len(cfg.dataset.class_names))}
+        return {x + 1: x + 1 for x in range(len(cfg.dataset.class_names))}
     else:
-        return cfg.dataset.label_map 
+        return cfg.dataset.label_map
+
 
 class COCOAnnotationTransform(object):
     """Transforms a COCO annotation into a Tensor of bbox coords and label index
     Initilized with a dictionary lookup of classnames to indexes
     """
+
     def __init__(self):
         self.label_map = get_label_map()
 
@@ -37,7 +40,7 @@ class COCOAnnotationTransform(object):
             if 'bbox' in obj:
                 bbox = obj['bbox']
                 label_idx = self.label_map[obj['category_id']] - 1
-                final_box = list(np.array([bbox[0], bbox[1], bbox[0]+bbox[2], bbox[1]+bbox[3]])/scale)
+                final_box = list(np.array([bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]) / scale)
                 final_box.append(label_idx)
                 res += [final_box]  # [xmin, ymin, xmax, ymax, label_idx]
             else:
@@ -63,17 +66,17 @@ class COCODetection(data.Dataset):
                  dataset_name='MS COCO', has_gt=True):
         # Do this here because we have too many things named COCO
         from pycocotools.coco import COCO
-        
+
         self.root = image_path
         self.coco = COCO(info_file)
-        
+
         self.ids = list(self.coco.imgToAnns.keys())
         if len(self.ids) == 0 or not has_gt:
             self.ids = list(self.coco.imgs.keys())
-        
+
         self.transform = transform
         self.target_transform = target_transform
-        
+
         self.name = dataset_name
         self.has_gt = has_gt
 
@@ -114,18 +117,18 @@ class COCODetection(data.Dataset):
         # Separate out crowd annotations. These are annotations that signify a large crowd of
         # objects of said class, where there is no annotation for each individual object. Both
         # during testing and training, consider these crowds as neutral.
-        crowd  = [x for x in target if     ('iscrowd' in x and x['iscrowd'])]
+        crowd = [x for x in target if ('iscrowd' in x and x['iscrowd'])]
         target = [x for x in target if not ('iscrowd' in x and x['iscrowd'])]
         num_crowds = len(crowd)
 
         # This is so we ensure that all crowd annotations are at the end of the array
         target += crowd
-        
+
         # The split here is to have compatibility with both COCO2014 and 2017 annotations.
         # In 2014, images have the pattern COCO_{train/val}2014_%012d.jpg, while in 2017 it's %012d.jpg.
         # Our script downloads the images as %012d.jpg so convert accordingly.
         file_name = self.coco.loadImgs(img_id)[0]['file_name']
-        
+
         if file_name.startswith('COCO'):
             file_name = file_name.split('_')[-1]
 
@@ -139,25 +142,28 @@ class COCODetection(data.Dataset):
         # path = path.replace("I:\\DVRPC\\COCO\\Image\\Test\\","")
         # assert osp.exists(path), 'Image path does not exist: {}'.format(path)
 
+        here = True
+
         if osp.exists(path):
-            pass
+            img = cv2.imread(path)
         else:
+            here = False
             print('Image path does not exist: {}'.format(path))
-            return None, None, None, None, None, num_crowds, file_name_wihout_ext
-
-        img = cv2.imread(path)
-
-        if img is None:
-            return None, None, None, None, None, num_crowds, file_name_wihout_ext
+            img = np.ones((256, 256, 3))
+            img = img * -1
 
         height, width, _ = img.shape
 
-        
         if len(target) > 0:
-            # Pool all the masks for this image into one [num_objects,height,width] matrix
-            masks = [self.coco.annToMask(obj).reshape(-1) for obj in target]
-            masks = np.vstack(masks)
-            masks = masks.reshape(-1, height, width)
+
+            if here:
+                # Pool all the masks for this image into one [num_objects,height,width] matrix
+                masks = [self.coco.annToMask(obj).reshape(-1) for obj in target]
+                masks = np.vstack(masks)
+                masks = masks.reshape(-1, height, width)
+            else:
+                masks = np.ones((height, width, 3))
+                masks = masks * -1
 
         if self.target_transform is not None and len(target) > 0:
             target = self.target_transform(target, width, height)
@@ -166,16 +172,17 @@ class COCODetection(data.Dataset):
             if len(target) > 0:
                 target = np.array(target)
                 img, masks, boxes, labels = self.transform(img, masks, target[:, :4],
-                    {'num_crowds': num_crowds, 'labels': target[:, 4]})
-            
+                                                           {'num_crowds': num_crowds, 'labels': target[:, 4]})
+
                 # I stored num_crowds in labels so I didn't have to modify the entirety of augmentations
                 num_crowds = labels['num_crowds']
-                labels     = labels['labels']
-                
+                labels = labels['labels']
+
                 target = np.hstack((boxes, np.expand_dims(labels, axis=1)))
             else:
-                img, _, _, _ = self.transform(img, np.zeros((1, height, width), dtype=np.float), np.array([[0, 0, 1, 1]]),
-                    {'num_crowds': 0, 'labels': np.array([0])})
+                img, _, _, _ = self.transform(img, np.zeros((1, height, width), dtype=np.float),
+                                              np.array([[0, 0, 1, 1]]),
+                                              {'num_crowds': 0, 'labels': np.array([0])})
                 masks = None
                 target = None
 
@@ -194,7 +201,7 @@ class COCODetection(data.Dataset):
         '''
         img_id = self.ids[index]
         path = self.coco.loadImgs(img_id)[0]['file_name']
-        return cv2.imread(osp.join(self.root, path), cv2.IMREAD_COLOR) # IMREAD_LOAD_GDAL
+        return cv2.imread(osp.join(self.root, path), cv2.IMREAD_COLOR)  # IMREAD_LOAD_GDAL
 
     def pull_anno(self, index):
         '''Returns the original annotation of image at index
