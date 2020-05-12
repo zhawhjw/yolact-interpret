@@ -144,7 +144,7 @@ class COCODetection(data.Dataset):
         else:
             print('Image path does not exist: {}'.format(path))
             return None, None, None, None, None, num_crowds, file_name_wihout_ext
-        
+
         img = cv2.imread(path)
 
         if img is None:

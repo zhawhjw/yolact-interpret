@@ -5,6 +5,7 @@ import torch
 import cv2
 import numpy as np
 
+
 def detection_collate(batch):
     """Custom collate fn for dealing with batches of images that have a different
     number of associated object annotations (bounding boxes).
@@ -25,9 +26,24 @@ def detection_collate(batch):
     names = []
 
     for sample in batch:
+
         imgs.append(sample[0])
-        targets.append(torch.FloatTensor(sample[1][0]))
-        masks.append(torch.FloatTensor(sample[1][1]))
+        if sample[0] is None:
+            pass
+        else:
+            imgs = torch.stack(imgs, 0)
+
+        if sample[1][0] is None:
+            targets.append(None)
+        else:
+            targets.append(torch.FloatTensor(sample[1][0]))
+
+        if sample[1][1] is None:
+            masks.append(None)
+        else:
+            masks.append(torch.FloatTensor(sample[1][1]))
+
         num_crowds.append(sample[1][2])
         names.append(sample[1][3])
-    return torch.stack(imgs, 0), (targets, masks, num_crowds, names)
+
+    return imgs, (targets, masks, num_crowds, names)
