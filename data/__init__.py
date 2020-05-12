@@ -24,6 +24,7 @@ def detection_collate(batch):
     masks = []
     num_crowds = []
     names = []
+    flags = []
 
     for sample in batch:
 
@@ -48,5 +49,6 @@ def detection_collate(batch):
 
         num_crowds.append(sample[1][2])
         names.append(sample[1][3])
+        flags.append(sample[1][4])
 
-    return torch.stack(imgs, 0), (targets, masks, num_crowds, names)
+    return torch.stack(imgs, 0), (targets, masks, num_crowds, names, flags)

@@ -266,7 +266,7 @@ def train():
 
                 # Load training data
                 # Note, for training on multiple gpus this will use the custom replicate and gather I wrote up there
-                images, targets, masks, num_crowds, image_name_wihout_ext = prepare_data(datum)
+                images, targets, masks, num_crowds, image_name_wihout_ext, here = prepare_data(datum)
 
                 # Forward Pass
                 out = net(images)
@@ -346,7 +346,7 @@ def set_lr(optimizer, new_lr):
 
 
 def prepare_data(datum):
-    images, (targets, masks, num_crowds, image_name_wihout_ext) = datum
+    images, (targets, masks, num_crowds, image_name_wihout_ext, here) = datum
 
     if args.cuda:
         images = Variable(images.cuda(), requires_grad=False)
@@ -357,7 +357,7 @@ def prepare_data(datum):
         targets = [Variable(ann, requires_grad=False) for ann in targets]
         masks = [Variable(mask, requires_grad=False) for mask in masks]
 
-    return images, targets, masks, num_crowds, image_name_wihout_ext
+    return images, targets, masks, num_crowds, image_name_wihout_ext, here
 
 
 def compute_validation_loss(net, data_loader, criterion):
