@@ -140,7 +140,12 @@ class COCODetection(data.Dataset):
         assert osp.exists(path), 'Image path does not exist: {}'.format(path)
         
         img = cv2.imread(path)
+
+        if img is None:
+            return None, None, None, None, None, num_crowds, file_name_wihout_ext
+        
         height, width, _ = img.shape
+
         
         if len(target) > 0:
             # Pool all the masks for this image into one [num_objects,height,width] matrix
