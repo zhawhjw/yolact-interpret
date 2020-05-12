@@ -137,13 +137,19 @@ class COCODetection(data.Dataset):
         path = osp.join(self.root, file_name)
         # path = path.replace("I:\\DVRPC\\COCO\\Image\\Train\\","")
         # path = path.replace("I:\\DVRPC\\COCO\\Image\\Test\\","")
-        assert osp.exists(path), 'Image path does not exist: {}'.format(path)
+        # assert osp.exists(path), 'Image path does not exist: {}'.format(path)
+
+        if osp.exists(path):
+            pass
+        else:
+            print('Image path does not exist: {}'.format(path))
+            return None, None, None, None, None, num_crowds, file_name_wihout_ext
         
         img = cv2.imread(path)
 
         if img is None:
             return None, None, None, None, None, num_crowds, file_name_wihout_ext
-        
+
         height, width, _ = img.shape
 
         
