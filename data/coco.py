@@ -162,7 +162,7 @@ class COCODetection(data.Dataset):
                 masks = np.vstack(masks)
                 masks = masks.reshape(-1, height, width)
             else:
-                masks = np.ones((height, width, 3))
+                masks = np.ones((height, width, 256))
                 masks = masks * -1
 
         if self.target_transform is not None and len(target) > 0:
