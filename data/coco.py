@@ -148,7 +148,7 @@ class COCODetection(data.Dataset):
             img = cv2.imread(path)
         else:
             here = False
-            print('Image path does not exist: {}'.format(path))
+            # print('Image path does not exist: {}'.format(path))
             img = np.ones((256, 256, 3))
             img = img * -1
 
